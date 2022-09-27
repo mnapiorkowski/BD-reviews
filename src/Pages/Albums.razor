@@ -1,0 +1,103 @@
+@page "/albums"
+
+<PageTitle>Albums</PageTitle>
+
+@using TRreviews.Data
+@inject AlbumService AlbumService
+
+<h1>Albums</h1>
+
+<div class="text-center"> 
+    <input @bind-value="searchText" placeholder="Search by title" onkeyup="if(event.keyCode===13){submit.click()}"/>
+    <button id="submit" @onclick="Search">Search</button>
+</div>
+
+<br>
+
+@if (!albumsList.Any())
+{
+    <br><br>
+    <h4 class="text-center">No results found!</h4>
+}
+else 
+{
+    <table class="table table-hover" style="table-layout:fixed">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Artist</th>
+                <th>Number of reviews</th>
+                <th>Average mark</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var album in albumsList)
+            {
+                <tr style="cursor:pointer" @onclick="@(() => Toggle(album))">
+                    <td>@album.Title</td>
+                    <td>@album.Artist?.DisplayName</td>
+                    <td>@album.ReviewsCount</td>
+                    <td>@album.AvgMark</td>
+                </tr>
+                @if (album.IsRowExpanded)
+                {
+                    <div style="text-align:center;">
+                    <div style="width:300%; margin: 0 auto; text-align:left;">
+                    <table style="width:100%; margin-left:30px" class="table">
+                        <thead>
+                            <tr>
+                                <th>Mark</th>
+                                <th>Reviewer</th>
+                                <th>Issue</th>
+                                <th>Section</th>
+                                <th>Page</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var review in album.Reviews)
+                            {
+                                <tr>
+                                    <td>@review.Mark</td>
+                                    <td>@review.Reviewer?.DisplayName</td>
+                                    <td>@review.Issue</td>
+                                    <td>@review.Section</td>
+                                    <td>@review.Page</td>
+                                </tr>   
+                            }
+                        </tbody>
+                    </table>
+                    </div>
+                    </div>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+    
+    List<Album> albumsList = new List<Album>();
+
+    public string searchText = "";
+    
+    protected override void OnInitialized()        
+    {
+        albumsList = new List<Album>(AlbumService.GetAlbums(4, 0, ""));
+    }
+
+    private void Toggle(Album album)
+    {
+        if (!album.IsExpandableSet)
+        {
+            album.Reviews = new List<Review>(AlbumService.GetExpandableContent(album));
+            album.IsExpandableSet = true;
+        }
+        album.IsRowExpanded = !album.IsRowExpanded;
+    }
+
+    private void Search()
+    {
+        albumsList = new List<Album>(AlbumService.GetAlbums(0, 0, searchText));
+    }
+}

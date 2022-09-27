@@ -1,0 +1,99 @@
+@page "/reviewers"
+
+<PageTitle>Reviewers</PageTitle>
+
+@using TRreviews.Data
+@inject ReviewerService ReviewerService
+
+<h1>Reviewers</h1>
+
+<div class="text-center"> 
+    <input @bind-value="searchText" placeholder="Search by name" onkeyup="if(event.keyCode===13){submit.click()}"/>
+    <button id="submit" @onclick="Search">Search</button>
+</div>
+
+<br>
+
+@if (!reviewersList.Any())
+{
+    <br><br>
+    <h4 class="text-center">No results found!</h4>
+}
+else 
+{
+    <table class="table table-hover" style="table-layout:fixed">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Albums reviewed</th>
+                <th>Average mark</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var reviewer in reviewersList)
+            {
+                <tr style="cursor:pointer" @onclick="@(() => Toggle(reviewer))">
+                    <td>@reviewer.Name</td>
+                    <td>@reviewer.AlbumsReviewed</td>
+                    <td>@reviewer.AvgMark</td>
+                </tr>
+                @if (reviewer.IsRowExpanded)
+                {
+                    <div style="text-align:center;">
+                    <div style="width:200%; margin:0 auto; text-align:left;">
+                    <table style="width:100%; margin-left:30px" class="table">
+                        <thead>
+                            <tr>
+                                <th>Fives</th>
+                                <th>Fours</th>
+                                <th>Threes</th>
+                                <th>Twos</th>
+                                <th>Ones</th>
+                                <th>No mark</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>@reviewer.Marks[0]</td>
+                                <td>@reviewer.Marks[1]</td>
+                                <td>@reviewer.Marks[2]</td>
+                                <td>@reviewer.Marks[3]</td>
+                                <td>@reviewer.Marks[4]</td>
+                                <td>@reviewer.Marks[5]</td>
+                            </tr> 
+                        </tbody>
+                    </table>
+                    </div>
+                    </div>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    
+    List<Reviewer> reviewersList = new List<Reviewer>();
+
+    public string searchText = "";
+    
+    protected override void OnInitialized()        
+    {
+        reviewersList = new List<Reviewer>(ReviewerService.GetReviewers(""));
+    }
+
+    private void Toggle(Reviewer reviewer)
+    {
+        if (!reviewer.IsExpandableSet)
+        {
+            reviewer.Marks = new List<int>(ReviewerService.GetExpandableContent(reviewer));
+            reviewer.IsExpandableSet = true;
+        }
+        reviewer.IsRowExpanded = !reviewer.IsRowExpanded;
+    }
+
+    private void Search()
+    {
+        reviewersList = new List<Reviewer>(ReviewerService.GetReviewers(searchText));
+    }
+}

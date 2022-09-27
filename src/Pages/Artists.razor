@@ -1,0 +1,135 @@
+@page "/artists"
+
+<PageTitle>Artists</PageTitle>
+
+@using TRreviews.Data
+@inject ArtistService ArtistService
+@inject AlbumService AlbumService
+
+<h1>Artists</h1>
+
+<div class="text-center"> 
+    <input @bind-value="searchText" placeholder="Search by name" onkeyup="if(event.keyCode===13){submit.click()}"/>
+    <button id="submit" @onclick="Search">Search</button>
+</div>
+
+<br>
+
+@if (!artistsList.Any())
+{
+    <br><br>
+    <h4 class="text-center">No results found!</h4>
+}
+else 
+{
+    <table class="table table-hover" style="table-layout:fixed">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Total number of reviews</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var artist in artistsList)
+            {
+                <tr style="cursor:pointer" @onclick="@(() => Toggle(@artist))">
+                    <td>@artist.Name</td>
+                    <td>@artist.ReviewsCount</td>
+                </tr>
+                @if (@artist.IsRowExpanded)
+                {
+                    <div style="text-align:center;">
+                    <div style="width:150%; margin:0 auto; text-align:left;">
+                    <table style="table-layout:fixed; margin-left:30px" class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Album</th>
+                                <th>Number of reviews</th>
+                                <th>Average mark</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var album in artist.Albums)
+                            {
+                                <tr style="cursor:pointer" @onclick="@(() => Toggle(@album))">
+                                    <td>@album.Title</td>
+                                    <td>@album.ReviewsCount</td>
+                                    <td>@album.AvgMark</td>
+                                </tr>   
+                                @if (@album.IsRowExpanded)
+                                {
+                                    <div style="text-align:center;">
+                                    <div style="width:300%; margin:0 auto; text-align:left;">
+                                    <table style="width:100%; margin-left:30px" class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Mark</th>
+                                                <th>Reviewer</th>
+                                                <th>Issue</th>
+                                                <th>Section</th>
+                                                <th>Page</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var review in album.Reviews)
+                                            {
+                                                <tr>
+                                                    <td>@review.Mark</td>
+                                                    <td>@review.Reviewer?.DisplayName</td>
+                                                    <td>@review.Issue</td>
+                                                    <td>@review.Section</td>
+                                                    <td>@review.Page</td>
+                                                </tr>   
+                                            }
+                                        </tbody>
+                                    </table>
+                                    </div>
+                                    </div>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                    </div>
+                    </div>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    
+    protected List<Artist> artistsList = new List<Artist>();
+
+    public string searchText = "";
+
+    protected override void OnInitialized()
+    {
+        artistsList = new List<Artist>(ArtistService.GetArtists(20, ""));
+    }
+
+    private void Toggle(Artist artist)
+    {
+        if (!artist.IsExpandableSet)
+        {
+            artist.Albums = new List<Album>(ArtistService.GetExpandableContent(artist));
+            artist.IsExpandableSet = true;
+        }
+        artist.IsRowExpanded = !artist.IsRowExpanded;
+    }
+
+    private void Toggle(Album album)
+    {
+        if (!album.IsExpandableSet)
+        {
+            album.Reviews = new List<Review>(AlbumService.GetExpandableContent(album));
+            album.IsExpandableSet = true;
+        }
+        album.IsRowExpanded = !album.IsRowExpanded;
+    }
+
+    private void Search()
+    {
+        artistsList = new List<Artist>(ArtistService.GetArtists(0, searchText));
+    }
+}
