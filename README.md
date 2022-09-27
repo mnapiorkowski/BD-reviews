@@ -1,6 +1,6 @@
 # BD - "Tylko/Teraz Rock" reviews
 
-Databases - 4. semester @ MIMUW
+Databases - 3. semester @ MIMUW
 
 ## How to run
 
